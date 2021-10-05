@@ -129,7 +129,7 @@ static inline uint16_t readBoop(void) {
 
 // Crude error handler. Prints message to Serial Monitor, blinks LED.
 void fatal(const char *message, uint16_t blinkDelay) {
-  Serial.begin(9600);
+  Serial.begin(115200);
   Serial.println(message);
   for(bool ledState = HIGH;; ledState = !ledState) {
     digitalWrite(LED_BUILTIN, ledState);
@@ -504,6 +504,7 @@ void loop() {
       if(moveEyesRandomly) {
         int32_t dt = t - eyeMoveStartTime;      // uS elapsed since last eye event
         if(eyeInMotion) {                       // Eye currently moving?
+            
           if(dt >= eyeMoveDuration) {           // Time up?  Destination reached.
             eyeInMotion = false;                // Stop moving
             // The "move" duration temporarily becomes a hold duration...
@@ -645,12 +646,13 @@ void loop() {
       // Periodically report frame rate. Really this is "total number of
       // eyeballs drawn." If there are two eyes, the overall refresh rate
       // of both screens is about 1/2 this.
+/*
       frames++;
       if(((t - lastFrameRateReportTime) >= 1000000) && t) { // Once per sec.
-        Serial.println((frames * 1000) / (t / 1000));
+        //Serial.println((frames * 1000) / (t / 1000));
         lastFrameRateReportTime = t;
       }
-
+*/
       // Once per frame (of eye #0), reset boopSum...
       if((eyeNum == 0) && (boopPin >= 0)) {
         boopSumFiltered = ((boopSumFiltered * 3) + boopSum) / 4;

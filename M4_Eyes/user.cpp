@@ -2,6 +2,9 @@
 
 #include "globals.h"
 
+static int xIn;
+static int yIn;
+
 // This file provides a crude way to "drop in" user code to the eyes,
 // allowing concurrent operations without having to maintain a bunch of
 // special derivatives of the eye code (which is still undergoing a lot
@@ -14,7 +17,11 @@
 // Called once near the end of the setup() function. If your code requires
 // a lot of time to initialize, make periodic calls to yield() to keep the
 // USB mass storage filesystem alive.
-void user_setup(void) {
+void user_setup(void) 
+{
+    showSplashScreen = false;
+    moveEyesRandomly = false;
+    pinMode(13, OUTPUT);
 }
 
 // Called periodically during eye animation. This is invoked in the
@@ -31,41 +38,43 @@ void user_setup(void) {
 // other over-time operations won't look very good using simple +/-
 // increments, it's better to use millis() or micros() and work
 // algebraically with elapsed times instead.
-void user_loop(void) {
-/*
-  Suppose we have a global bool "animating" (meaning something is in
-  motion) and global uint32_t's "startTime" (the initial time at which
-  something triggered movement) and "transitionTime" (the total time
-  over which movement should occur, expressed in microseconds).
-  Maybe it's servos, maybe NeoPixels, or something different altogether.
-  This function might resemble something like (pseudocode):
+void user_loop(void) 
+{
+    char coords[2][5];
+    int index = 0;
+    int i = 0;
 
-  if(!animating) {
-    Not in motion, check sensor for trigger...
-    if(read some sensor) {
-      Motion is triggered! Record startTime, set transition
-      to 1.5 seconds and set animating flag:
-      startTime      = micros();
-      transitionTime = 1500000;
-      animating      = true;
-      No motion actually takes place yet, that will begin on
-      the next pass through this function.
+    // Clean up so we don't use old data
+    memset(coords[0], '\0', 5);
+    memset(coords[1], '\0', 5);
+
+    // There isn't a big transfer, so just grab it all, and tell the eyes where to go
+    while (Serial.available() > 0) {
+        char c = Serial.read();
+
+        switch (c) {
+            case '\n':
+                eyeTargetX = std::stof(coords[0]);
+                eyeTargetY = std::stof(coords[1]);
+                Serial.print(coords[0]);
+                Serial.print(",");
+                Serial.println(coords[1]);
+                break;
+            case ',':
+                index++;
+                i = 0;
+                break;
+            default:
+                coords[index][i++] = c;
+                break;
+        }
+
+        // Gonna need better handling of errors here should we never
+        // get a comma or newline
+        if (i == 5) {
+            return;
+        }
     }
-  } else {
-    Currently in motion, ignore trigger and move things instead...
-    uint32_t elapsed = millis() - startTime;
-    if(elapsed < transitionTime) {
-      Part way through motion...how far along?
-      float ratio = (float)elapsed / (float)transitionTime;
-      Do something here based on ratio, 0.0 = start, 1.0 = end
-    } else {
-      End of motion reached.
-      Take whatever steps here to move into final position (1.0),
-      and then clear the "animating" flag:
-      animating = false;
-    }
-  }
-*/
 }
 
 #endif // 0
